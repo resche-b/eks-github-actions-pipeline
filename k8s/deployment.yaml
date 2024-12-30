@@ -15,5 +15,6 @@ spec:
       containers:
       - name: cloud-native-app
         image: 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:latest    # Docker image for the container
+        imagePullPolicy: Always  # Ensures Kubernetes always pulls the latest image
         ports:
-        - containerPort: 3000 # Port exposed by the container
+        - containerPort: 3000    # Port exposed by the container
