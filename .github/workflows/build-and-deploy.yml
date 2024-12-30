@@ -1,0 +1,42 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the code
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # Step 2: Login to AWS ECR
+    - name: Login to AWS ECR
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo
+
+    # Step 3: Build Docker Image
+    - name: Build Docker Image
+      run: |
+        docker build -t cloud-native-app .
+        docker tag cloud-native-app:latest 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:latest
+
+    # Step 4: Push Docker Image to ECR
+    - name: Push Docker Image to ECR
+      run: |
+        docker push 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:latest
+
+    # Step 5: Apply Kubernetes Manifests
+    - name: Apply Kubernetes Manifests
+      env:
+        KUBECONFIG: ${{ secrets.KUBECONFIG }}
+      run: |
+        kubectl apply -f k8s/deployment.yaml
+        kubectl apply -f k8s/service.yaml
