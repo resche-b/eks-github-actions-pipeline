@@ -1,0 +1,19 @@
+apiVersion: apps/v1           # Specifies the API version for Deployment
+kind: Deployment              # Declares the resource type as Deployment
+metadata:
+  name: cloud-native-app      # Name of the Deployment
+spec:
+  replicas: 2                 # Desired number of pod replicas
+  selector:                   # Matches pods with a specific label
+    matchLabels:
+      app: cloud-native-app
+  template:                   # Template for creating pods
+    metadata:
+      labels:
+        app: cloud-native-app
+    spec:
+      containers:
+      - name: cloud-native-app
+        image: <IMAGE_URI>    # Docker image for the container
+        ports:
+        - containerPort: 3000 # Port exposed by the container

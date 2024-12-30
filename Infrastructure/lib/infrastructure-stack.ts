@@ -15,11 +15,25 @@ export class InfrastructureStack extends cdk.Stack {
       isDefault: true,
     });
 
+    // Filter out subnets in unsupported AZs
+    const filteredSubnets = vpc.selectSubnets({
+      subnetFilters: [
+        ec2.SubnetFilter.availabilityZones([
+          "us-east-1a",
+          "us-east-1b",
+          "us-east-1c",
+          "us-east-1d",
+          "us-east-1f",
+        ]),
+      ],
+    }).subnets;
+
     const cluster = new eks.Cluster(this, "EKS-Cluster", {
       clusterName: "eks-cluster",
       vpc: vpc,
       defaultCapacity: 2,
       version: eks.KubernetesVersion.V1_30,
+      vpcSubnets: [{ subnets: filteredSubnets }],
     });
 
     const repo = new ecr.Repository(this, "ECRRepo", {
