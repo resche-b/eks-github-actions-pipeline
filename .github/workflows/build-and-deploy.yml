@@ -36,7 +36,10 @@ jobs:
     # Step 5: Apply Kubernetes Manifests
     - name: Apply Kubernetes Manifests
       env:
-        KUBECONFIG: ${{ secrets.KUBECONFIG }}
+        KUBECONFIG: ${{ runner.temp }}/kubeconfig.yaml
       run: |
+        echo "${{ secrets.KUBECONFIG }}" > $KUBECONFIG
         kubectl apply -f k8s/deployment.yaml
         kubectl apply -f k8s/service.yaml
+  
+  
