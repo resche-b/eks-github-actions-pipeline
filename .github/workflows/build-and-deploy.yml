@@ -19,30 +19,34 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: us-east-1
       run: |
         aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo
 
-    # Step 3: Build Docker Image
+    # Step 3: Build and Tag Docker Image
     - name: Build Docker Image
+      env:
+        GIT_COMMIT: ${{ github.sha }}
       run: |
-        docker build -f ./app/Dockerfile -t cloud-native-app ./app
-        docker tag cloud-native-app:latest 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:latest
+        docker build -f ./app/Dockerfile -t cloud-native-app:$GIT_COMMIT ./app
+        docker tag cloud-native-app:$GIT_COMMIT 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:$GIT_COMMIT
 
     # Step 4: Push Docker Image to ECR
     - name: Push Docker Image to ECR
+      env:
+        GIT_COMMIT: ${{ github.sha }}
       run: |
-        docker push 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:latest
+        docker push 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:$GIT_COMMIT
 
-    # Step 5: Apply Kubernetes Manifests
-    - name: Apply Kubernetes Manifests
+    # Step 5: Update Kubernetes Deployment
+    - name: Update Kubernetes Deployment
       env:
         KUBECONFIG: ${{ runner.temp }}/kubeconfig.yaml
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: us-east-1
+        GIT_COMMIT: ${{ github.sha }}
       run: |
         echo "${{ secrets.KUBECONFIG }}" > $KUBECONFIG
-        kubectl apply -f k8s/deployment.yaml
+        kubectl set image deployment/cloud-native-app cloud-native-app=905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:$GIT_COMMIT
         kubectl apply -f k8s/service.yaml
-  
-  
