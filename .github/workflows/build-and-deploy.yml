@@ -37,6 +37,9 @@ jobs:
     - name: Apply Kubernetes Manifests
       env:
         KUBECONFIG: ${{ runner.temp }}/kubeconfig.yaml
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: us-east-1
       run: |
         echo "${{ secrets.KUBECONFIG }}" > $KUBECONFIG
         kubectl apply -f k8s/deployment.yaml
