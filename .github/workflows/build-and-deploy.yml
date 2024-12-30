@@ -25,7 +25,7 @@ jobs:
     # Step 3: Build Docker Image
     - name: Build Docker Image
       run: |
-        docker build -t cloud-native-app .
+        docker build -f ./app/Dockerfile -t cloud-native-app ./app
         docker tag cloud-native-app:latest 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:latest
 
     # Step 4: Push Docker Image to ECR
