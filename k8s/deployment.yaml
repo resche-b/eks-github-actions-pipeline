@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: cloud-native-app
-        image: <IMAGE_URI>    # Docker image for the container
+        image: 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:latest    # Docker image for the container
         ports:
         - containerPort: 3000 # Port exposed by the container

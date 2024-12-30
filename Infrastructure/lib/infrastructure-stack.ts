@@ -1,10 +1,10 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as eks from "aws-cdk-lib/aws-eks";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as ecr from "aws-cdk-lib/aws-ecr";
 import * as iam from "aws-cdk-lib/aws-iam";
+import { KubectlV28Layer } from "@aws-cdk/lambda-layer-kubectl-v28";
 
 export class InfrastructureStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -28,14 +28,17 @@ export class InfrastructureStack extends cdk.Stack {
       ],
     }).subnets;
 
+    // Create an EKS Cluster with Kubectl Layer
     const cluster = new eks.Cluster(this, "EKS-Cluster", {
       clusterName: "eks-cluster",
       vpc: vpc,
       defaultCapacity: 2,
-      version: eks.KubernetesVersion.V1_30,
+      version: eks.KubernetesVersion.V1_28, // Match your Kubectl layer version
       vpcSubnets: [{ subnets: filteredSubnets }],
+      kubectlLayer: new KubectlV28Layer(this, "KubectlLayer"),
     });
 
+    // Create an ECR Repository
     const repo = new ecr.Repository(this, "ECRRepo", {
       repositoryName: "ecr-repo",
     });
@@ -52,9 +55,17 @@ export class InfrastructureStack extends cdk.Stack {
       ],
     });
 
+    // Grant Cluster Access to an IAM User
+    const userArn = "arn:aws:iam::905418307151:user/resche";
+    cluster.awsAuth.addUserMapping(iam.User.fromUserArn(this, "UserResche", userArn), {
+      username: "resche",
+      groups: ["system:masters"], // Grant admin access
+    });
+
     // Allow Internal Traffic in the Cluster
     cluster.connections.allowInternally(ec2.Port.allTraffic());
 
+    // Output the ECR Repository URI
     new cdk.CfnOutput(this, "ECRRepoUri", {
       value: repo.repositoryUri,
       description: "ECR Repository URI",
