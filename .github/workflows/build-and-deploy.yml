@@ -19,10 +19,13 @@ jobs:
       id: changes
       run: |
         if git show --name-only ${{ github.sha }} | grep -q '^Infrastructure/'; then
+          echo "Infrastructure folder changed."
           echo "changed=true" >> $GITHUB_ENV
         else
+          echo "No changes in Infrastructure folder."
           echo "changed=false" >> $GITHUB_ENV
         fi
+        echo "Value of CHANGED: ${{ env.changed }}"
 
     # Step 3: Run CDK Diff to Check for Infrastructure Changes
     - name: Run CDK Diff
@@ -32,6 +35,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: us-east-1
       run: |
+        echo "Running CDK diff as changes are detected."
         npm install -g aws-cdk
         npm install --prefix Infrastructure
         cd Infrastructure
@@ -45,6 +49,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: us-east-1
       run: |
+        echo "Deploying Infrastructure changes as changes are detected."
         cd Infrastructure
         cdk deploy --require-approval never
 
@@ -55,6 +60,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: us-east-1
       run: |
+        echo "Logging in to AWS ECR."
         aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo
 
     # Step 6: Build and Tag Docker Image
@@ -62,6 +68,7 @@ jobs:
       env:
         GIT_COMMIT: ${{ github.sha }}
       run: |
+        echo "Building Docker image with tag $GIT_COMMIT."
         docker build -f ./app/Dockerfile -t cloud-native-app:$GIT_COMMIT ./app
         docker tag cloud-native-app:$GIT_COMMIT 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:$GIT_COMMIT
 
@@ -70,6 +77,7 @@ jobs:
       env:
         GIT_COMMIT: ${{ github.sha }}
       run: |
+        echo "Pushing Docker image with tag $GIT_COMMIT to ECR."
         docker push 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:$GIT_COMMIT
 
     # Step 8: Update Deployment YAML with the Latest Image
@@ -77,6 +85,7 @@ jobs:
       env:
         GIT_COMMIT: ${{ github.sha }}
       run: |
+        echo "Updating deployment.yaml with image tag $GIT_COMMIT."
         sed -i "s|<IMAGE_TAG>|$GIT_COMMIT|g" k8s/deployment.yaml
 
     # Step 9: Apply Kubernetes Deployment
@@ -87,5 +96,6 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: us-east-1
       run: |
+        echo "Applying Kubernetes deployment."
         echo "${{ secrets.KUBECONFIG }}" > $KUBECONFIG
         kubectl apply -f k8s/deployment.yaml
