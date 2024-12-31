@@ -18,12 +18,15 @@ jobs:
     - name: Check for Changes in Infrastructure
       id: changes
       run: |
-        git show --name-only ${{ github.sha }} | grep -q '^Infrastructure/'
-        echo "CHANGED=$?" >> $GITHUB_ENV
+        if git show --name-only ${{ github.sha }} | grep -q '^Infrastructure/'; then
+          echo "changed=true" >> $GITHUB_ENV
+        else
+          echo "changed=false" >> $GITHUB_ENV
+        fi
 
     # Step 3: Run CDK Diff to Check for Infrastructure Changes
     - name: Run CDK Diff
-      if: ${{ env.CHANGED == '0' }}
+      if: ${{ env.changed == 'true' }}
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -36,7 +39,7 @@ jobs:
 
     # Step 4: Deploy Infrastructure Changes
     - name: Deploy Infrastructure Changes
-      if: ${{ env.CHANGED == '0' }}
+      if: ${{ env.changed == 'true' }}
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
