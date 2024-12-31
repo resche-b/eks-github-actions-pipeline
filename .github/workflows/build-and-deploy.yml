@@ -101,3 +101,4 @@ jobs:
         echo "Applying Kubernetes deployment..."
         echo "${{ secrets.KUBECONFIG }}" > $KUBECONFIG
         kubectl apply -f k8s/deployment.yaml
+        kubectl apply -f k8s/service.yaml
