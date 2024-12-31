@@ -20,12 +20,12 @@ jobs:
       run: |
         echo "Checking for changes in the Infrastructure folder..."
 
-        # Show files changed in the latest commit
-        echo "Git show output:"
-        git show --name-only ${{ github.sha }}
+        # Show files changed between the commit and its parent
+        echo "Git diff --name-only output:"
+        git diff --name-only ${{ github.sha }}~1 ${{ github.sha }}
 
         # Check for changes in the Infrastructure folder
-        if git show --name-only ${{ github.sha }} | grep -q '^Infrastructure/'; then
+        if git diff --name-only ${{ github.sha }}~1 ${{ github.sha }} | grep -q '^Infrastructure/'; then
           echo "Infrastructure folder changed."
           echo "changed=true" >> $GITHUB_ENV
         else
