@@ -14,7 +14,38 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    # Step 2: Login to AWS ECR
+    # Step 2: Check for Changes in Infrastructure Folder
+    - name: Check for Changes in Infrastructure
+      id: changes
+      run: |
+        git show --name-only ${{ github.sha }} | grep -q '^Infrastructure/'
+        echo "CHANGED=$?" >> $GITHUB_ENV
+
+    # Step 3: Run CDK Diff to Check for Infrastructure Changes
+    - name: Run CDK Diff
+      if: ${{ env.CHANGED == '0' }}
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: us-east-1
+      run: |
+        npm install -g aws-cdk
+        npm install --prefix Infrastructure
+        cd Infrastructure
+        cdk diff
+
+    # Step 4: Deploy Infrastructure Changes
+    - name: Deploy Infrastructure Changes
+      if: ${{ env.CHANGED == '0' }}
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: us-east-1
+      run: |
+        cd Infrastructure
+        cdk deploy --require-approval never
+
+    # Step 5: Login to AWS ECR
     - name: Login to AWS ECR
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -23,7 +54,7 @@ jobs:
       run: |
         aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo
 
-    # Step 3: Build and Tag Docker Image
+    # Step 6: Build and Tag Docker Image
     - name: Build Docker Image
       env:
         GIT_COMMIT: ${{ github.sha }}
@@ -31,22 +62,27 @@ jobs:
         docker build -f ./app/Dockerfile -t cloud-native-app:$GIT_COMMIT ./app
         docker tag cloud-native-app:$GIT_COMMIT 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:$GIT_COMMIT
 
-    # Step 4: Push Docker Image to ECR
+    # Step 7: Push Docker Image to ECR
     - name: Push Docker Image to ECR
       env:
         GIT_COMMIT: ${{ github.sha }}
       run: |
         docker push 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:$GIT_COMMIT
 
-    # Step 5: Update Kubernetes Deployment
-    - name: Update Kubernetes Deployment
+    # Step 8: Update Deployment YAML with the Latest Image
+    - name: Update Deployment YAML
+      env:
+        GIT_COMMIT: ${{ github.sha }}
+      run: |
+        sed -i "s|<IMAGE_TAG>|$GIT_COMMIT|g" k8s/deployment.yaml
+
+    # Step 9: Apply Kubernetes Deployment
+    - name: Apply Kubernetes Deployment
       env:
         KUBECONFIG: ${{ runner.temp }}/kubeconfig.yaml
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: us-east-1
-        GIT_COMMIT: ${{ github.sha }}
       run: |
         echo "${{ secrets.KUBECONFIG }}" > $KUBECONFIG
-        kubectl set image deployment/cloud-native-app cloud-native-app=905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:$GIT_COMMIT
-        kubectl apply -f k8s/service.yaml
+        kubectl apply -f k8s/deployment.yaml

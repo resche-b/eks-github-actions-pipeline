@@ -1,20 +1,20 @@
-apiVersion: apps/v1           # Specifies the API version for Deployment
-kind: Deployment              # Declares the resource type as Deployment
+apiVersion: apps/v1           
+kind: Deployment              
 metadata:
-  name: cloud-native-app      # Name of the Deployment
+  name: cloud-native-app      
 spec:
-  replicas: 2                 # Desired number of pod replicas
-  selector:                   # Matches pods with a specific label
+  replicas: 2                 
+  selector:                   
     matchLabels:
       app: cloud-native-app
-  template:                   # Template for creating pods
+  template:                   
     metadata:
       labels:
         app: cloud-native-app
     spec:
       containers:
       - name: cloud-native-app
-        image: 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:latest    # Docker image for the container
-        imagePullPolicy: Always  # Ensures Kubernetes always pulls the latest image
+        image: 905418307151.dkr.ecr.us-east-1.amazonaws.com/ecr-repo:<IMAGE_TAG>  # Placeholder for image tag
+        imagePullPolicy: Always  
         ports:
-        - containerPort: 3000    # Port exposed by the container
+        - containerPort: 3000    
