@@ -19,13 +19,17 @@ jobs:
       id: changes
       run: |
         echo "Checking for changes in the Infrastructure folder..."
+        echo "Git show output:"
+        git show --name-only ${{ github.sha }}
+
         if git show --name-only ${{ github.sha }} | grep -q '^Infrastructure/'; then
-          echo "changed=true" >> $GITHUB_ENV
           echo "Infrastructure folder changed."
+          echo "changed=true" >> $GITHUB_ENV
         else
-          echo "changed=false" >> $GITHUB_ENV
           echo "No changes in Infrastructure folder."
+          echo "changed=false" >> $GITHUB_ENV
         fi
+
         echo "Set environment variable CHANGED to:"
         cat $GITHUB_ENV
 
