@@ -72,3 +72,4 @@ export class InfrastructureStack extends cdk.Stack {
     });
   }
 }
+
