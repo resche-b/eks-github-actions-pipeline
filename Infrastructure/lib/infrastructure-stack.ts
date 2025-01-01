@@ -33,7 +33,7 @@ export class InfrastructureStack extends cdk.Stack {
       clusterName: "eks-cluster",
       vpc: vpc,
       defaultCapacity: 2,
-      version: eks.KubernetesVersion.V1_28, // Match your Kubectl layer version
+      version: eks.KubernetesVersion.V1_28,
       vpcSubnets: [{ subnets: filteredSubnets }],
       kubectlLayer: new KubectlV28Layer(this, "KubectlLayer"),
     });
@@ -59,7 +59,7 @@ export class InfrastructureStack extends cdk.Stack {
     const userArn = "arn:aws:iam::905418307151:user/resche";
     cluster.awsAuth.addUserMapping(iam.User.fromUserArn(this, "UserResche", userArn), {
       username: "resche",
-      groups: ["system:masters"], // Grant admin access
+      groups: ["system:masters"],
     });
 
     // Allow Internal Traffic in the Cluster
