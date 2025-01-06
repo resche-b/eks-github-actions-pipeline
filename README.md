@@ -5,10 +5,10 @@ This repository demonstrates how to deploy a **Node.js & Express** application t
 ---
 
 ## 📝 **Table of Contents**
-1. [Project Overview](#-project-overview)  
-2. [Tech Stack](#%EF%B8%8F-tech-stack)  
-3. [Infrastructure Overview](#-infrastructure-overview)  
-4. [GitHub Actions Workflow](#-github-actions-workflow)  
+1. [Project Overview](#project-overview)  
+2. [Tech Stack](#tech-stack)  
+3. [Infrastructure Overview](#infrastructure-overview)  
+4. [GitHub Actions Workflow](#github-actions-workflow)  
 
 ---
 
